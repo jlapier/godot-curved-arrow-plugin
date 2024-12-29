@@ -1,0 +1,32 @@
+[gd_scene load_steps=4 format=3 uid="uid://cyh6tq7gqy6wu"]
+
+[ext_resource type="Script" path="res://addons/2d_curved_arrow/curved_arrow_2d.gd" id="1_mbeac"]
+[ext_resource type="Shader" path="res://addons/2d_curved_arrow/canvas_group_outline.gdshader" id="2_ll3fx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_gwb1f"]
+shader = ExtResource("2_ll3fx")
+shader_parameter/line_color = Color(0.792157, 0.180392, 0.266667, 1)
+shader_parameter/alpha = 0.8
+shader_parameter/line_thickness = 4
+
+[node name="CurvedArrow2D" type="Node2D"]
+z_index = 50
+script = ExtResource("1_mbeac")
+outline_color = Color(0.792157, 0.180392, 0.266667, 1)
+outline_thickness = 4
+
+[node name="ArrowGroup" type="CanvasGroup" parent="."]
+material = SubResource("ShaderMaterial_gwb1f")
+metadata/_edit_lock_ = true
+
+[node name="StartStar" type="Polygon2D" parent="."]
+position = Vector2(10, 10)
+scale = Vector2(0.76, 0.463649)
+offset = Vector2(-15, 23)
+polygon = PackedVector2Array(2.5, -29.25, 10.3947, -21.2751, 7.76316, -6.17751, 15, -15.25, 22.2368, -6.17751, 19.6053, -21.2751, 27.5, -29.25, 17.5, -29.25, 15, -45, 12.5, -29.25)
+
+[node name="EndStar" type="Polygon2D" parent="."]
+position = Vector2(200, 200)
+scale = Vector2(0.76, 0.463649)
+offset = Vector2(-15, 23)
+polygon = PackedVector2Array(2.5, -29.25, 10.3947, -21.2751, 7.76316, -6.17751, 15, -15.25, 22.2368, -6.17751, 19.6053, -21.2751, 27.5, -29.25, 17.5, -29.25, 15, -45, 12.5, -29.25)

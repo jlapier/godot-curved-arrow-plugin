@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bftjurppxpsks"]
+
+[ext_resource type="Script" path="res://addons/2d_curved_arrow/curved_arrow_2d.gd" id="1_vnp7o"]
+[ext_resource type="Shader" path="res://addons/2d_curved_arrow/canvas_group_outline.gdshader" id="2_xb0ff"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_okwgo"]
+shader = ExtResource("2_xb0ff")
+shader_parameter/line_color = Color(1, 1, 1, 1)
+shader_parameter/alpha = 0.8
+shader_parameter/line_thickness = 1
+
+[node name="TestScene" type="Node2D"]
+
+[node name="CurvedArrow2D" type="Node2D" parent="."]
+script = ExtResource("1_vnp7o")
+end_pos = Vector2(268.242, 433.367)
+
+[node name="ArrowGroup" type="CanvasGroup" parent="CurvedArrow2D"]
+material = SubResource("ShaderMaterial_okwgo")
