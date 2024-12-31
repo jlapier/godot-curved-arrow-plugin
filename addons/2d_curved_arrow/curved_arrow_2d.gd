@@ -5,26 +5,36 @@ extends Node2D
 var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_arrow_2d_scene.tscn")
 
 @export_group("Arrow Properties")
+# the global position of the tip of the arrow
 @export var end_pos: Vector2 = Vector2(200, 200):
     set(value):
         end_pos = value
         if end_star: end_star.global_position = value
         if Engine.is_editor_hint(): queue_redraw()
+# tune this up or down to increase or decrease the amount of bend
 @export var curve_height_factor: float = 0.8:
     set(value):
         curve_height_factor = value
         if Engine.is_editor_hint(): queue_redraw()
+# main color of the arrow
 @export var color: Color = Color(0.7, 0.7, 0.5, 1.0):
     set(value):
         color = value
         queue_redraw()
+# width of the arrow body, not including the head
 @export var width: float = 30.0:
     set(value):
         width = value
         queue_redraw()
-@export var arrowhead_size: float = 80.0:
+# size from the base of the arrowhead to the tip
+@export var arrowhead_height: float = 60.0:
     set(value):
-        arrowhead_size = value
+        arrowhead_height = value
+        queue_redraw()
+# size at the base of the arrowhead; note if this is smaller than half the width, the head will be inverted
+@export var arrowhead_width: float = 80.0:
+    set(value):
+        arrowhead_width = value
         queue_redraw()
 
 @export_group("Outline Properties")
@@ -95,6 +105,8 @@ func _draw():
     var diff:                 float = start_pos.x - end_pos.y
     var calc_curve_factor:    float = lerp(-curve_height_factor, curve_height_factor, smoothstep(-100, 100, diff))
     var start_tangent_factor: float = curve_height_factor
+    # this tapers off the curve at the end - we could make it adjustable, but it kind of distorts the
+    # arrow if it's too hight, so ... shrug
     var end_tangent_factor:   float = 0.1
 
     var control_point: Vector2 = mid_point + perpendicular * (end_pos - start_pos).length() * calc_curve_factor
@@ -104,49 +116,51 @@ func _draw():
     curve.add_point(end_pos, (end_pos - control_point) * end_tangent_factor, Vector2.ZERO)
 
     var all_points: PackedVector2Array = curve.get_baked_points()
-    var points:     PackedVector2Array = all_points
-    var modi:       float              = arrowhead_size / 4
-    if all_points.size() > modi:
-        points = all_points.slice(0, -modi)
-
-    if points.size() < 2:
+    if all_points.size() < 5:
         return
 
-    var last_point: Vector2 = points[-1]
+    var guide_points: Array[Vector2]
+    guide_points.assign(all_points)
+    var top_side_points: Array[Vector2]
+    var bottom_side_points: Array[Vector2]
 
-    # Draw the main curve
-    var line = Line2D.new()
-    line.points = points
-    line.width = width
-    line.default_color = color
-    arrow_group.add_child(line)
+    var i_offset = 10
+    var last_top_tip: Vector2
+    var last_bottom_tip: Vector2
+    for i in guide_points.size():
+        var guide_point = guide_points[i]
+        if guide_point.distance_to(end_pos) < arrowhead_height: break
+        # most likely we don't reach this point because of the height check, but this
+        # is to protect us from going out of bounds
+        if i+i_offset >= guide_points.size(): i_offset = max(i_offset - 1, 0)
+        var dir:  Vector2 = (guide_points[i+i_offset] - guide_point).normalized()
+        var perp: Vector2 = Vector2(-dir.y, dir.x)
+        top_side_points.append(guide_point - perp * width / 2)
+        last_top_tip = guide_point - perp * (arrowhead_width - width) / 2
+        bottom_side_points.append(guide_point + perp * width / 2)
+        last_bottom_tip = guide_point + perp * (arrowhead_width - width) / 2
+
+    if top_side_points.size() < 1 or bottom_side_points.size() < 1: return
+
+    var arrow_pts: Array[Vector2] = [
+        last_top_tip,
+        end_pos, # tip of the arrow!
+        last_bottom_tip
+    ]
+
+    bottom_side_points.reverse() # to order the points, we go up one side, over the head, then down the other side
+
+    var arrow_poly = Polygon2D.new()
+    arrow_poly.polygon = PackedVector2Array(top_side_points + arrow_pts + bottom_side_points)
+    arrow_poly.color = color
+    arrow_group.add_child(arrow_poly)
 
     if all_points.size() < 7:
         return
 
-    var tangent: Vector2
-    if points.size() >= 5:
-        tangent = (points[-1] - points[-5]).normalized()
-    else:
-        tangent = (last_point - start_pos).normalized()
-
-    # Draw arrowhead as a filled triangle
-    var arrow_tip_point: Vector2 = all_points[-7]
-    var arrowhead_points: PackedVector2Array = PackedVector2Array([
-        arrow_tip_point,
-        arrow_tip_point - tangent.rotated(PI/6) * arrowhead_size,
-        arrow_tip_point - tangent.rotated(-PI/6) * arrowhead_size
-    ])
-
-    var polygon: Polygon2D = Polygon2D.new()
-    polygon.polygon = arrowhead_points
-    polygon.color = color
-    arrow_group.add_child(polygon)
-
     # set up bounding ref - note: this doesn't do a good job of covering the curved line
     # but once rewritten to be a single polygon it should be better
-    var combined_points: Array[Vector2]
-    combined_points.assign(Array(points + arrowhead_points))
+    var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrow_pts
     var x_vals: Array[float]
     x_vals.assign(combined_points.map(func(p): return p.x))
     var y_vals: Array[float]
