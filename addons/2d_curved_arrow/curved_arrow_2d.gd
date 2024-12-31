@@ -8,7 +8,7 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
 @export var end_pos: Vector2 = Vector2(200, 200):
     set(value):
         end_pos = value
-        if end_star: end_star.position = value
+        if end_star: end_star.global_position = value
         if Engine.is_editor_hint(): queue_redraw()
 @export var curve_height_factor: float = 0.8:
     set(value):
@@ -87,7 +87,7 @@ func _draw():
     if end_pos == Vector2.ZERO:
         return
 
-    var start_pos:     Vector2 = position # start wherever the node's position is
+    var start_pos:     Vector2 = global_position # start wherever the node's position is
     var mid_point:     Vector2 = (start_pos + end_pos) / 2
     var direction:     Vector2 = (end_pos - start_pos).normalized()
     var perpendicular: Vector2 = Vector2(-direction.y, direction.x)

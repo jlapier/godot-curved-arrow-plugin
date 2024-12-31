@@ -1,27 +1,45 @@
 [gd_scene load_steps=3 format=3 uid="uid://bftjurppxpsks"]
 
+[ext_resource type="Script" path="res://test_scene.gd" id="1_4uvj7"]
 [ext_resource type="Script" path="res://addons/2d_curved_arrow/curved_arrow_2d.gd" id="1_gaug5"]
-[ext_resource type="Texture2D" uid="uid://d1pg15cwrsy3g" path="res://icon.svg" id="2_fp4bj"]
 
 [node name="TestScene" type="Node2D"]
+script = ExtResource("1_4uvj7")
 
 [node name="CurvedArrow2D" type="Node2D" parent="."]
-position = Vector2(147, 426)
+position = Vector2(66, 154)
 script = ExtResource("1_gaug5")
-end_pos = Vector2(889.008, 525.756)
+end_pos = Vector2(255.886, 488.421)
 color = Color(0.469536, 0.716695, 0.887926, 1)
-
-[node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(136, 175)
-scale = Vector2(1.34375, 1.375)
-texture = ExtResource("2_fp4bj")
+outline_color = Color(0.2147, 0.648726, 0, 1)
+outline_thickness = 5
 
 [node name="Polygon2D" type="Polygon2D" parent="."]
-visible = false
-position = Vector2(424, 44)
-polygon = PackedVector2Array(2, -1, 257, 38, 302, 150, 305, 356, 96, 502, -62, 313, -54, 64)
+position = Vector2(745, 49)
+color = Color(4.09111e-07, 0.412488, 0.406186, 1)
+polygon = PackedVector2Array(2, -1, 257, 38, 302, 150, 305, 356, 91, 433, -62, 313, -54, 64)
 
-[node name="CurvedArrow2D" type="Node2D" parent="Polygon2D"]
-position = Vector2(432, 330)
+[node name="ChildCurvedArrow2D" type="Node2D" parent="Polygon2D"]
+position = Vector2(45, 125)
 script = ExtResource("1_gaug5")
-outline_color = Color(0.793735, 0.345787, 0.672541, 1)
+end_pos = Vector2(1029.01, 361.065)
+color = Color(0.938248, 0.518122, 0.800277, 1)
+outline_color = Color(0.995776, 0, 0.290746, 1)
+transparency = 0.5
+
+[node name="ArrowFollowMouseButton" type="Button" parent="."]
+offset_left = 108.0
+offset_top = 565.0
+offset_right = 222.0
+offset_bottom = 596.0
+text = "Enable Follow Mouse"
+
+[node name="ChildArrowFollowMouseButton" type="Button" parent="."]
+offset_left = 758.0
+offset_top = 564.0
+offset_right = 972.0
+offset_bottom = 595.0
+text = "Enable Child Follow Mouse"
+
+[connection signal="pressed" from="ArrowFollowMouseButton" to="." method="_on_arrow_follow_mouse_button_pressed"]
+[connection signal="pressed" from="ChildArrowFollowMouseButton" to="." method="_on_child_arrow_follow_mouse_button_pressed"]

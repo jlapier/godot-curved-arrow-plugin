@@ -13,6 +13,11 @@ func _handles(object) -> bool:
 
 # triggers on select and deselect (with object = null)
 func _edit(object) -> void:
+    # different arrow selected, deselect the first one
+    if _selected_node and _selected_node != object:
+        _selected_node.is_selected_in_editor = false
+        _selected_node.queue_redraw()
+
     _selected_node = object
     if _selected_node:
         _selected_node.is_selected_in_editor = true
