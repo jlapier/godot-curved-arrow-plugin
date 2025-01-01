@@ -14,7 +14,7 @@ func _input(event: InputEvent) -> void:
 
     # moving mouse? follow that mouse!
     if event is InputEventMouseMotion:
-        _arrow_follow_mouse.end_pos = event.position
+        _arrow_follow_mouse.end_position = event.position
         _arrow_follow_mouse.queue_redraw()
 
     # on click, deselect arrow
