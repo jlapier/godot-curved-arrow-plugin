@@ -155,18 +155,13 @@ func _draw():
     arrow_poly.color = color
     arrow_group.add_child(arrow_poly)
 
-    if all_points.size() < 7:
-        return
-
-    # set up bounding ref - note: this doesn't do a good job of covering the curved line
-    # but once rewritten to be a single polygon it should be better
-    var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrow_pts
-    var x_vals: Array[float]
-    x_vals.assign(combined_points.map(func(p): return p.x))
-    var y_vals: Array[float]
-    y_vals.assign(combined_points.map(func(p): return p.y))
-    reference_rect.position = Vector2(x_vals.min(), y_vals.min())
-    reference_rect.size     = Vector2(x_vals.max() - x_vals.min(), y_vals.max() - y_vals.min())
+    if is_selected_in_editor:
+        # set up bounding ref - just a visual in the editor
+        var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrow_pts
+        var x_vals = combined_points.map(func(p: Vector2): return p.x)
+        var y_vals = combined_points.map(func(p: Vector2): return p.y)
+        reference_rect.position = Vector2(x_vals.min(), y_vals.min())
+        reference_rect.size     = Vector2(x_vals.max() - x_vals.min(), y_vals.max() - y_vals.min())
 
     # set visibility of editor helpers
     reference_rect.visible = is_selected_in_editor
