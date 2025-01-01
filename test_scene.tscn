@@ -10,11 +10,10 @@ script = ExtResource("1_4uvj7")
 [node name="CurvedArrow2D" type="Node2D" parent="."]
 position = Vector2(66, 154)
 script = ExtResource("1_gaug5")
-end_pos = Vector2(255.856, 481.197)
+end_position = Vector2(211.519, 468.289)
 color = Color(0.469536, 0.716695, 0.887926, 1)
 width = 15.0
 arrowhead_height = 40.0
-arrowhead_width = 80.0
 outline_color = Color(0.2147, 0.648726, 0, 1)
 outline_thickness = 5
 
@@ -26,7 +25,7 @@ polygon = PackedVector2Array(2, -1, 257, 38, 302, 150, 305, 356, 91, 433, -62, 3
 [node name="ChildCurvedArrow2D" type="Node2D" parent="PolygonBackground"]
 position = Vector2(45, 125)
 script = ExtResource("1_gaug5")
-end_pos = Vector2(679.024, 389.716)
+end_position = Vector2(679, 389)
 color = Color(0.938248, 0.518122, 0.800277, 1)
 arrowhead_height = 30.0
 arrowhead_width = 100.0

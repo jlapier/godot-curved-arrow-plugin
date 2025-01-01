@@ -6,9 +6,9 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
 
 @export_group("Arrow Properties")
 # the global position of the tip of the arrow
-@export var end_pos: Vector2 = Vector2(200, 200):
+@export var end_position: Vector2 = Vector2(200, 200):
     set(value):
-        end_pos = value
+        end_position = value
         if end_star: end_star.global_position = value
         if Engine.is_editor_hint(): queue_redraw()
 # tune this up or down to increase or decrease the amount of bend
@@ -71,7 +71,7 @@ func _init():
 
 func _get_configuration_warnings() -> PackedStringArray:
     var warnings: PackedStringArray = []
-    if end_pos == Vector2.ZERO:
+    if end_position == Vector2.ZERO:
         warnings.append("Start and end positions must be set")
     return warnings
 
@@ -94,26 +94,26 @@ func _draw():
     for child in arrow_group.get_children():
         child.queue_free()
 
-    if end_pos == Vector2.ZERO:
+    if end_position == Vector2.ZERO:
         return
 
     var start_pos:     Vector2 = global_position # start wherever the node's position is
-    var mid_point:     Vector2 = (start_pos + end_pos) / 2
-    var direction:     Vector2 = (end_pos - start_pos).normalized()
+    var mid_point:     Vector2 = (start_pos + end_position) / 2
+    var direction:     Vector2 = (end_position - start_pos).normalized()
     var perpendicular: Vector2 = Vector2(-direction.y, direction.x)
 
-    var diff:                 float = start_pos.x - end_pos.y
+    var diff:                 float = start_pos.x - end_position.y
     var calc_curve_factor:    float = lerp(-curve_height_factor, curve_height_factor, smoothstep(-100, 100, diff))
     var start_tangent_factor: float = curve_height_factor
     # this tapers off the curve at the end - we could make it adjustable, but it kind of distorts the
     # arrow if it's too hight, so ... shrug
     var end_tangent_factor:   float = 0.1
 
-    var control_point: Vector2 = mid_point + perpendicular * (end_pos - start_pos).length() * calc_curve_factor
+    var control_point: Vector2 = mid_point + perpendicular * (end_position - start_pos).length() * calc_curve_factor
 
     var curve: Curve2D = Curve2D.new()
     curve.add_point(start_pos, Vector2.ZERO, (control_point - start_pos) * start_tangent_factor)
-    curve.add_point(end_pos, (end_pos - control_point) * end_tangent_factor, Vector2.ZERO)
+    curve.add_point(end_position, (end_position - control_point) * end_tangent_factor, Vector2.ZERO)
 
     var all_points: PackedVector2Array = curve.get_baked_points()
     if all_points.size() < 5:
@@ -129,7 +129,7 @@ func _draw():
     var last_bottom_tip: Vector2
     for i in guide_points.size():
         var guide_point = guide_points[i]
-        if guide_point.distance_to(end_pos) < arrowhead_height: break
+        if guide_point.distance_to(end_position) < arrowhead_height: break
         # most likely we don't reach this point because of the height check, but this
         # is to protect us from going out of bounds
         if i+i_offset >= guide_points.size(): i_offset = max(i_offset - 1, 0)
@@ -144,7 +144,7 @@ func _draw():
 
     var arrow_pts: Array[Vector2] = [
         last_top_tip,
-        end_pos, # tip of the arrow!
+        end_position, # tip of the arrow!
         last_bottom_tip
     ]
 
@@ -185,7 +185,7 @@ func in_boundary_box(pos: Vector2) -> bool:
 # useful for setting to the coords of other nodes, or following the mouse
 func set_positions(start: Vector2, end: Vector2):
     position = start
-    end_pos = end
+    end_position = end
     queue_redraw()
 
 # in some cases, you may want to change these params while the arrow is moving or something,
