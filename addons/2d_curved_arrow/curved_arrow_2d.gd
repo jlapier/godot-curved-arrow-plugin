@@ -6,9 +6,9 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
 
 @export_group("Arrow Properties")
 # the global position of the tip of the arrow
-@export var end_position: Vector2 = Vector2(200, 200):
+@export var global_end_position: Vector2 = Vector2(200, 200):
     set(value):
-        end_position = value
+        global_end_position = value
         if end_star: end_star.global_position = value
         if Engine.is_editor_hint(): queue_redraw()
 # tune this up or down to increase or decrease the amount of bend
@@ -71,8 +71,8 @@ func _init():
 
 func _get_configuration_warnings() -> PackedStringArray:
     var warnings: PackedStringArray = []
-    if end_position == Vector2.ZERO:
-        warnings.append("Start and end positions must be set")
+    if global_end_position == global_position:
+        warnings.append("Start and end positions must be different from each other")
     return warnings
 
 func _notification(what: int) -> void:
@@ -94,10 +94,13 @@ func _draw():
     for child in arrow_group.get_children():
         child.queue_free()
 
-    if end_position == Vector2.ZERO:
+    if global_end_position == global_position:
         return
 
-    var start_pos:     Vector2 = global_position # start wherever the node's position is
+    # positions will be local to the parent node when the arrow Polygon is added as a child, so convert to local
+    var start_pos:     Vector2 = Vector2.ZERO # start wherever the node's position is
+    var end_position:  Vector2 = global_end_position - global_position # localize the end position
+
     var mid_point:     Vector2 = (start_pos + end_position) / 2
     var direction:     Vector2 = (end_position - start_pos).normalized()
     var perpendicular: Vector2 = Vector2(-direction.y, direction.x)
@@ -119,8 +122,10 @@ func _draw():
     if all_points.size() < 5:
         return
 
+    # guide points represent a line down the middle of the arrow we want
     var guide_points: Array[Vector2]
     guide_points.assign(all_points)
+    # populate these with either side of the guide arrow
     var top_side_points: Array[Vector2]
     var bottom_side_points: Array[Vector2]
 
@@ -180,7 +185,7 @@ func in_boundary_box(pos: Vector2) -> bool:
 # useful for setting to the coords of other nodes, or following the mouse
 func set_positions(start: Vector2, end: Vector2):
     position = start
-    end_position = end
+    global_end_position = end
     queue_redraw()
 
 # in some cases, you may want to change these params while the arrow is moving or something,

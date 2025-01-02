@@ -42,7 +42,7 @@ func _forward_canvas_draw_over_viewport(viewport_control: Control) -> void:
     _update_transforms()
 
     var pos_scale = _transform_to_view.get_scale()
-    var end_pos_offset = (_selected_node.end_position - _selected_node.position) * pos_scale
+    var end_pos_offset = (_selected_node.global_end_position - _selected_node.position) * pos_scale
     _end_handle_pos = _transform_to_view.get_origin() + end_pos_offset
     # XXX: this makes a circle show up at the end of the arrow, but it
     # doesn't move with the mouse, so it's not great. May come back to this.
@@ -62,7 +62,7 @@ func _forward_canvas_gui_input(event: InputEvent) -> bool:
             return true
         _dragging_handle = false
     elif event is InputEventMouseMotion and _dragging_handle:
-        _selected_node.end_position = _transform_to_base * event.position + _selected_node.position
+        _selected_node.global_end_position = _transform_to_base * event.position + _selected_node.position
         return true
 
     return false

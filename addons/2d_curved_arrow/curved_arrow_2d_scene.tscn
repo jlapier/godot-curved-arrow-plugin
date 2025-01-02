@@ -9,7 +9,7 @@ shader_parameter/line_color = Color(0.792157, 0.180392, 0.266667, 1)
 shader_parameter/alpha = 0.8
 shader_parameter/line_thickness = 4
 
-[node name="CurvedArrow2DScene" type="Node"]
+[node name="CurvedArrow2DScene" type="Node2D"]
 
 [node name="ArrowGroup" type="CanvasGroup" parent="."]
 material = SubResource("ShaderMaterial_gwb1f")
