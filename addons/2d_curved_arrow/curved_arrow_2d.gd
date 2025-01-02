@@ -10,12 +10,12 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
     set(value):
         global_end_position = value
         if end_star: end_star.global_position = value
-        if Engine.is_editor_hint(): queue_redraw()
+        queue_redraw()
 # tune this up or down to increase or decrease the amount of bend
 @export var curve_height_factor: float = 0.8:
     set(value):
         curve_height_factor = value
-        if Engine.is_editor_hint(): queue_redraw()
+        queue_redraw()
 # main color of the arrow
 @export var color: Color = Color(0.7, 0.7, 0.5, 1.0):
     set(value):
@@ -98,24 +98,25 @@ func _draw():
         return
 
     # positions will be local to the parent node when the arrow Polygon is added as a child, so convert to local
-    var start_pos:     Vector2 = Vector2.ZERO # start wherever the node's position is
-    var end_position:  Vector2 = global_end_position - global_position # localize the end position
+    var start_position: Vector2 = Vector2.ZERO # start wherever the node's position is
+    var parent = get_parent()
+    var end_position:   Vector2 = global_end_position - global_position # localize the end position
 
-    var mid_point:     Vector2 = (start_pos + end_position) / 2
-    var direction:     Vector2 = (end_position - start_pos).normalized()
-    var perpendicular: Vector2 = Vector2(-direction.y, direction.x)
+    var mid_point:      Vector2 = (start_position + end_position) / 2
+    var direction:      Vector2 = (end_position - start_position).normalized()
+    var perpendicular:  Vector2 = Vector2(-direction.y, direction.x)
 
-    var diff:                 float = start_pos.x - end_position.y
+    var diff:                 float = start_position.x - end_position.y
     var calc_curve_factor:    float = lerp(-curve_height_factor, curve_height_factor, smoothstep(-100, 100, diff))
     var start_tangent_factor: float = curve_height_factor
     # this tapers off the curve at the end - we could make it adjustable, but it kind of distorts the
     # arrow if it's too hight, so ... shrug
     var end_tangent_factor:   float = 0.1
 
-    var control_point: Vector2 = mid_point + perpendicular * (end_position - start_pos).length() * calc_curve_factor
+    var control_point: Vector2 = mid_point + perpendicular * (end_position - start_position).length() * calc_curve_factor
 
     var curve: Curve2D = Curve2D.new()
-    curve.add_point(start_pos, Vector2.ZERO, (control_point - start_pos) * start_tangent_factor)
+    curve.add_point(start_position, Vector2.ZERO, (control_point - start_position) * start_tangent_factor)
     curve.add_point(end_position, (end_position - control_point) * end_tangent_factor, Vector2.ZERO)
 
     var all_points: PackedVector2Array = curve.get_baked_points()
