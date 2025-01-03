@@ -49,3 +49,5 @@ func _on_arrow_bto_a_button_pressed() -> void:
         add_child(_sprite_b_to_a_arrow)
         _sprite_b_to_a_arrow.set_positions(spriteB.global_position, spriteA.global_position)
         _sprite_b_to_a_arrow.color = Color.DARK_BLUE
+        # flip the arrow so it curves on the opposite side
+        _sprite_b_to_a_arrow.curve_height_factor *= -1
