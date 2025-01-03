@@ -11,7 +11,8 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
         global_end_position = value
         if end_star: end_star.global_position = value
         queue_redraw()
-# tune this up or down to increase or decrease the amount of bend
+# tune this up or down to increase or decrease the amount of bend;
+# setting this to a negative number will flip the bend of the curve to the opposite side
 @export var curve_height_factor: float = 0.8:
     set(value):
         curve_height_factor = value
@@ -78,6 +79,7 @@ func _get_configuration_warnings() -> PackedStringArray:
 func _notification(what: int) -> void:
     if what == NOTIFICATION_TRANSFORM_CHANGED:
         # the position or something changed, so redraw the arrow
+        if end_star: end_star.global_position = global_end_position
         queue_redraw()
 
 func _update_shader_params():
@@ -99,7 +101,6 @@ func _draw():
 
     # positions will be local to the parent node when the arrow Polygon is added as a child, so convert to local
     var start_position: Vector2 = Vector2.ZERO # start wherever the node's position is
-    var parent = get_parent()
     var end_position:   Vector2 = global_end_position - global_position # localize the end position
 
     var mid_point:      Vector2 = (start_position + end_position) / 2
@@ -107,8 +108,10 @@ func _draw():
     var perpendicular:  Vector2 = Vector2(-direction.y, direction.x)
 
     var diff:                 float = start_position.x - end_position.y
-    var calc_curve_factor:    float = lerp(-curve_height_factor, curve_height_factor, smoothstep(-100, 100, diff))
-    var start_tangent_factor: float = curve_height_factor
+    if curve_height_factor < 0:
+        diff = end_position.y - start_position.x
+    var start_tangent_factor: float = abs(curve_height_factor)
+    var calc_curve_factor:    float = lerp(-start_tangent_factor, start_tangent_factor, smoothstep(-100, 100, diff))
     # this tapers off the curve at the end - we could make it adjustable, but it kind of distorts the
     # arrow if it's too hight, so ... shrug
     var end_tangent_factor:   float = 0.1
