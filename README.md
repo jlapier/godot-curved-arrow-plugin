@@ -1,5 +1,10 @@
 # Curved Arrow 2D Plugin for Godot 4.x
 
+This Godot plugin adds a new node type called CurvedArrow2D. It allows you to create arrows with a bend 
+in them, both in the scene editor and via code.
+
+![Screenshot of a test scene featuring curved arrows.](./screenshots/test-scene.png)
+
 ## Requirements
 
 This plugin has been tested on Godot 4.3, but likely works with any 4.x version.
@@ -32,6 +37,8 @@ Click and drag this star to change the location of the tip of the arrow.
 * `outline_color: Color`
 * `transparency: float`
 * `outline_thickness: int`
+
+![Screenshot of the CurvedArrow2D node properties in the Godot editor.](./screenshots/settings.png)
 
 ## Usage via scripting
 
