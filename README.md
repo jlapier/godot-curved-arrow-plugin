@@ -1,9 +1,15 @@
 # Curved Arrow 2D Plugin for Godot 4.x
 
-This Godot plugin adds a new node type called CurvedArrow2D. It allows you to create arrows with a bend 
+This Godot plugin adds a new node type called CurvedArrow2D. It allows you to create arrows with a bend
 in them, both in the scene editor and via code.
 
 ![Screenshot of a test scene featuring curved arrows.](./screenshots/test-scene.png)
+
+The arrows can be animated as well. Though you can use an AnimationPlayer to animate the end position property,
+this will result in a kind of oddly expanding arrow. By using an AnimationPlayer that is keyed on the
+`animation_progress` property from 0.0 to 1.0, the arrowhead will move along the path of the arrow smoothly.
+
+See [sample video of animation](https://raw.githubusercontent.com/jlapier/godot-curved-arrow-plugin/refs/heads/main/screenshots/animated.webm).
 
 ## Requirements
 
@@ -19,7 +25,7 @@ When in the *Create New Node* dialog, you should find a new node type called Cur
 
 The start of the arrow should be the position of the node; you can move it like any other node.
 
-When selecting a CurvedArrow2D node in the scene tree, a white star will appear at the end of the arrow. 
+When selecting a CurvedArrow2D node in the scene tree, a white star will appear at the end of the arrow.
 Click and drag this star to change the location of the tip of the arrow.
 
 ### Other parameters
@@ -29,20 +35,23 @@ Click and drag this star to change the location of the tip of the arrow.
 * `global_end_position: Vector2` - the global position of the tip of the arrow (same as dragging with the mouse)
 * `curve_height_factor: float` - tune this up or down to increase or decrease the amount of bend. *NOTE:* setting this to a negative number will flip the bend of the curve to the opposite side.
 * `color: Color` - main color of the arrow
+* `transparency: float` - alpha transparency of the arrow
 * `width: float` - width of the arrow body, not including the head
 * `arrowhead_height: float` - size from the base of the arrowhead to the tip
 * `arrowhead_width: float` - size at the base of the arrowhead; note if this is smaller than half the width, the head will be inverted
 
 #### Outline Properties
 * `outline_color: Color`
-* `transparency: float`
 * `outline_thickness: int`
+
+#### Animation Properties
+* `animation_progress: float` - provides a percentage (0.0 to 1.0) of the arrow's length to render along (the head will always appear)
 
 ![Screenshot of the CurvedArrow2D node properties in the Godot editor.](./screenshots/settings.png)
 
 ## Usage via scripting
 
-Arrows can be created and manipulated in code. 
+Arrows can be created and manipulated in code.
 
 Creating an arrow on the fly and setting it to point from one node to another:
 

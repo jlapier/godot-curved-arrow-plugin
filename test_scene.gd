@@ -4,6 +4,7 @@ extends Node2D
 @onready var child_curved_arrow: CurvedArrow2D = $PolygonBackground/ChildCurvedArrow2D
 @onready var spriteA: Sprite2D = $SpriteBackground/SpriteA
 @onready var spriteB: Sprite2D = $SpriteBackground/SpriteB
+@onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 var _arrow_follow_mouse: CurvedArrow2D = null
 var _sprite_a_to_b_arrow: CurvedArrow2D
@@ -51,3 +52,11 @@ func _on_arrow_bto_a_button_pressed() -> void:
         _sprite_b_to_a_arrow.color = Color.DARK_BLUE
         # flip the arrow so it curves on the opposite side
         _sprite_b_to_a_arrow.curve_height_factor *= -1
+
+
+func _on_toggle_anim_button_pressed() -> void:
+    if animation_player.is_playing():
+        animation_player.stop()
+        curved_arrow_2d.animation_progress = 1.0
+    else:
+        animation_player.play()
