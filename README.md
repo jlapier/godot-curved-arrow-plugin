@@ -6,10 +6,10 @@ in them, both in the scene editor and via code.
 ![Screenshot of a test scene featuring curved arrows.](./screenshots/test-scene.png)
 
 The arrows can be animated as well. Though you can use an AnimationPlayer to animate the end position property,
-this will result in a kind of oddly expanding arrow. With the built-in animation, the arrowhead will move
-along the path of the arrow smoothly.
+this will result in a kind of oddly expanding arrow. By using an AnimationPlayer that is keyed on the
+`animation_progress` property from 0.0 to 1.0, the arrowhead will move along the path of the arrow smoothly.
 
-<video src='./screenshots/animated.webm' width=180 />
+See [sample video of animation](https://raw.githubusercontent.com/jlapier/godot-curved-arrow-plugin/refs/heads/main/screenshots/animated.webm).
 
 ## Requirements
 
@@ -45,12 +45,7 @@ Click and drag this star to change the location of the tip of the arrow.
 * `outline_thickness: int`
 
 #### Animation Properties
-* `animation_duration: float` - number of seconds that the animation plays (0 is no animation)
-* `animation_behavior: enum` - choices are:
-  * NONE - no animation, just draw the arrow normally
-  * ONE_SHOT - animate once (grow to the length of the arrow)
-  * LOOP - animate continuously, growing to length and then shrinking
-  * LOOP_FORWARD - repeat the grow animation
+* `animation_progress: float` - provides a percentage (0.0 to 1.0) of the arrow's length to render along (the head will always appear)
 
 ![Screenshot of the CurvedArrow2D node properties in the Godot editor.](./screenshots/settings.png)
 

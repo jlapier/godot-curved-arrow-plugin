@@ -2,8 +2,6 @@
 class_name CurvedArrow2D
 extends Node2D
 
-enum ArrowAnimationBehavior { NONE, ONE_SHOT, LOOP, LOOP_FORWARD }
-
 var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_arrow_2d_scene.tscn")
 
 @export_group("Arrow Properties")
@@ -55,29 +53,18 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
         outline_thickness = value
         _update_shader_params()
 
-@export_group("Animation")
-@export var animation_duration: float = 0:
+@export_group("Animation Helper")
+@export_range(0.0, 1.0) var animation_progress: float = 1.0:
     set(value):
-        animation_duration = value
-        _start_animation()
-        queue_redraw()
-@export var animation_behavior: ArrowAnimationBehavior = ArrowAnimationBehavior.NONE:
-    set(value):
-        animation_behavior = value
-        _start_animation()
-        queue_redraw()
+        if animation_progress != value:
+            animation_progress = value
+            queue_redraw()
 
 var arrow_poly: Polygon2D
 var arrow_group: CanvasGroup
 var end_star: Polygon2D
 var reference_rect: ReferenceRect
 var is_selected_in_editor: bool = false
-var animation_progress: float = 1.0:
-    set(value):
-        if animation_progress != value:
-            animation_progress = value
-            queue_redraw()
-var animation_tween: Tween = null
 
 @onready var orig_outline_color = outline_color
 @onready var orig_transparency = transparency
@@ -203,37 +190,15 @@ func _draw():
         # set up bounding ref - just a visual in the editor
         var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrowhead_pts
         var x_vals = combined_points.map(func(p: Vector2): return p.x)
+        x_vals.append(end_position.x)
         var y_vals = combined_points.map(func(p: Vector2): return p.y)
+        y_vals.append(end_position.y)
         reference_rect.position = Vector2(x_vals.min(), y_vals.min())
         reference_rect.size     = Vector2(x_vals.max() - x_vals.min(), y_vals.max() - y_vals.min())
 
     # set visibility of editor helpers
     reference_rect.visible = is_selected_in_editor
     end_star.visible       = is_selected_in_editor
-
-func _start_animation():
-    if animation_behavior == ArrowAnimationBehavior.NONE or animation_duration <= 0:
-        animation_progress = 1
-        return
-
-    if animation_tween != null:
-        animation_tween.kill()
-
-    animation_tween = create_tween()
-    animation_progress = 0
-
-    match animation_behavior:
-        ArrowAnimationBehavior.ONE_SHOT:
-            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
-        ArrowAnimationBehavior.LOOP_FORWARD:
-            animation_tween.set_loops()
-            # Create a sequence that goes 0->1 then back to 0
-            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
-            animation_tween.tween_property(self, "animation_progress", 0.0, 0)  # Instant reset
-        ArrowAnimationBehavior.LOOP:
-            animation_tween.set_loops()
-            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
-            animation_tween.tween_property(self, "animation_progress", 0.0, animation_duration)
 
 ### Public functions
 
