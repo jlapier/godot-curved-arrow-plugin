@@ -16,6 +16,8 @@ width = 15.0
 arrowhead_height = 40.0
 outline_color = Color(0.2147, 0.648726, 0, 1)
 outline_thickness = 5
+animation_duration = 2.5
+animation_behavior = 3
 
 [node name="PolygonBackground" type="Polygon2D" parent="."]
 position = Vector2(465, 61)
@@ -27,10 +29,10 @@ position = Vector2(94, 336)
 script = ExtResource("1_gaug5")
 global_end_position = Vector2(502.609, 123.447)
 color = Color(0.938248, 0.518122, 0.800277, 1)
+transparency = 0.5
 arrowhead_height = 30.0
 arrowhead_width = 100.0
 outline_color = Color(0.995776, 0, 0.290746, 1)
-transparency = 0.5
 
 [node name="ArrowFollowMouseButton" type="Button" parent="."]
 offset_left = 108.0

@@ -2,6 +2,8 @@
 class_name CurvedArrow2D
 extends Node2D
 
+enum ArrowAnimationBehavior { NONE, ONE_SHOT, LOOP, LOOP_FORWARD }
+
 var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_arrow_2d_scene.tscn")
 
 @export_group("Arrow Properties")
@@ -22,6 +24,11 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
     set(value):
         color = value
         queue_redraw()
+# alpha transparency of the arrow
+@export_range(0.0, 1.0) var transparency: float = 0.8:
+    set(value):
+        transparency = value
+        _update_shader_params()
 # width of the arrow body, not including the head
 @export var width: float = 30.0:
     set(value):
@@ -43,19 +50,34 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
     set(value):
         outline_color = value
         _update_shader_params()
-@export_range(0.0, 1.0) var transparency: float = 0.8:
-    set(value):
-        transparency = value
-        _update_shader_params()
 @export_range(0, 10) var outline_thickness: int = 1:
     set(value):
         outline_thickness = value
         _update_shader_params()
 
+@export_group("Animation")
+@export var animation_duration: float = 0:
+    set(value):
+        animation_duration = value
+        _start_animation()
+        queue_redraw()
+@export var animation_behavior: ArrowAnimationBehavior = ArrowAnimationBehavior.NONE:
+    set(value):
+        animation_behavior = value
+        _start_animation()
+        queue_redraw()
+
+var arrow_poly: Polygon2D
 var arrow_group: CanvasGroup
 var end_star: Polygon2D
 var reference_rect: ReferenceRect
 var is_selected_in_editor: bool = false
+var animation_progress: float = 1.0:
+    set(value):
+        if animation_progress != value:
+            animation_progress = value
+            queue_redraw()
+var animation_tween: Tween = null
 
 @onready var orig_outline_color = outline_color
 @onready var orig_transparency = transparency
@@ -69,6 +91,9 @@ func _init():
     arrow_group    = arrow_scene.get_node("ArrowGroup")
     end_star       = arrow_scene.get_node("EndStar")
     reference_rect = arrow_scene.get_node("ReferenceRect")
+
+    arrow_poly = Polygon2D.new()
+    arrow_group.add_child(arrow_poly)
 
 func _get_configuration_warnings() -> PackedStringArray:
     var warnings: PackedStringArray = []
@@ -91,13 +116,7 @@ func _update_shader_params():
     arrow_group.material.set_shader_parameter("line_thickness", outline_thickness)
 
 func _draw():
-    if !arrow_group: return
-    # Clear previous drawings by removing all children of the CanvasGroup
-    for child in arrow_group.get_children():
-        child.queue_free()
-
-    if global_end_position == global_position:
-        return
+    if global_end_position == global_position: return
 
     # positions will be local to the parent node when the arrow Polygon is added as a child, so convert to local
     var start_position: Vector2 = Vector2.ZERO # start wherever the node's position is
@@ -107,10 +126,14 @@ func _draw():
     var direction:      Vector2 = (end_position - start_position).normalized()
     var perpendicular:  Vector2 = Vector2(-direction.y, direction.x)
 
+    # base the strength of the curve on the difference between the points
     var diff:                 float = start_position.x - end_position.y
+    # if this param is negative, flip the arrow's bend to the other side
     if curve_height_factor < 0:
         diff = end_position.y - start_position.x
+
     var start_tangent_factor: float = abs(curve_height_factor)
+    # this lerp smooths out the arrow so that when moving around, e.g. with mouse input, it doesn't glitch out
     var calc_curve_factor:    float = lerp(-start_tangent_factor, start_tangent_factor, smoothstep(-100, 100, diff))
     # this tapers off the curve at the end - we could make it adjustable, but it kind of distorts the
     # arrow if it's too hight, so ... shrug
@@ -126,23 +149,37 @@ func _draw():
     if all_points.size() < 5:
         return
 
+    # Calculate how many points to use based on animation_progress
+    var point_count = int(all_points.size() * animation_progress)
+    point_count = max(5, point_count)  # Keep minimum points for the arrow to draw
+
     # guide points represent a line down the middle of the arrow we want
     var guide_points: Array[Vector2]
-    guide_points.assign(all_points)
+    # Get the subset of points for the current animation state
+    guide_points.assign(all_points.slice(0, point_count))
+
     # populate these with either side of the guide arrow
     var top_side_points: Array[Vector2]
     var bottom_side_points: Array[Vector2]
 
-    var i_offset = 10
+    # the offset helps us project a few points down the line so we get an accurate direction
+    # (and thus perpendicular). But we have to be careful not to go out of bounds of the array.
+    var i_offset = min(10, guide_points.size() - 1)
+
+    # tips form the arrowhead
     var last_top_tip: Vector2
     var last_bottom_tip: Vector2
+    var arrow_tip = guide_points[-1]
+
+    # now go through the guide points and create the sidelines and arrow tips
     for i in guide_points.size():
         var guide_point = guide_points[i]
-        if guide_point.distance_to(end_position) < arrowhead_height: break
+        if guide_point.distance_to(arrow_tip) < arrowhead_height: break
         # most likely we don't reach this point because of the height check, but this
         # is to protect us from going out of bounds
-        if i+i_offset >= guide_points.size(): i_offset = max(i_offset - 1, 0)
-        var dir:  Vector2 = (guide_points[i+i_offset] - guide_point).normalized()
+        if i + i_offset >= guide_points.size():
+            i_offset = max(i_offset - 1, 0)
+        var dir:  Vector2 = (guide_points[i + i_offset] - guide_point).normalized()
         var perp: Vector2 = Vector2(-dir.y, dir.x)
         top_side_points.append(guide_point - perp * width / 2)
         last_top_tip = guide_point - perp * (arrowhead_width - width) / 2
@@ -151,22 +188,20 @@ func _draw():
 
     if top_side_points.size() < 1 or bottom_side_points.size() < 1: return
 
-    var arrow_pts: Array[Vector2] = [
+    var arrowhead_pts: Array[Vector2] = [
         last_top_tip,
-        end_position, # tip of the arrow!
-        last_bottom_tip
+        arrow_tip,
+        last_bottom_tip,
     ]
 
     bottom_side_points.reverse() # to order the points, we go up one side, over the head, then down the other side
 
-    var arrow_poly = Polygon2D.new()
-    arrow_poly.polygon = PackedVector2Array(top_side_points + arrow_pts + bottom_side_points)
+    arrow_poly.polygon = PackedVector2Array(top_side_points + arrowhead_pts + bottom_side_points)
     arrow_poly.color = color
-    arrow_group.add_child(arrow_poly)
 
     if is_selected_in_editor:
         # set up bounding ref - just a visual in the editor
-        var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrow_pts
+        var combined_points: Array[Vector2] = top_side_points + bottom_side_points + arrowhead_pts
         var x_vals = combined_points.map(func(p: Vector2): return p.x)
         var y_vals = combined_points.map(func(p: Vector2): return p.y)
         reference_rect.position = Vector2(x_vals.min(), y_vals.min())
@@ -176,6 +211,29 @@ func _draw():
     reference_rect.visible = is_selected_in_editor
     end_star.visible       = is_selected_in_editor
 
+func _start_animation():
+    if animation_behavior == ArrowAnimationBehavior.NONE or animation_duration <= 0:
+        animation_progress = 1
+        return
+
+    if animation_tween != null:
+        animation_tween.kill()
+
+    animation_tween = create_tween()
+    animation_progress = 0
+
+    match animation_behavior:
+        ArrowAnimationBehavior.ONE_SHOT:
+            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
+        ArrowAnimationBehavior.LOOP_FORWARD:
+            animation_tween.set_loops()
+            # Create a sequence that goes 0->1 then back to 0
+            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
+            animation_tween.tween_property(self, "animation_progress", 0.0, 0)  # Instant reset
+        ArrowAnimationBehavior.LOOP:
+            animation_tween.set_loops()
+            animation_tween.tween_property(self, "animation_progress", 1.0, animation_duration)
+            animation_tween.tween_property(self, "animation_progress", 0.0, animation_duration)
 
 ### Public functions
 
