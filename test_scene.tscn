@@ -4,6 +4,21 @@
 [ext_resource type="Script" path="res://addons/2d_curved_arrow/curved_arrow_2d.gd" id="1_gaug5"]
 [ext_resource type="Texture2D" uid="uid://d1pg15cwrsy3g" path="res://icon.svg" id="2_fp4bj"]
 
+[sub_resource type="Animation" id="Animation_c5y25"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:animation_progress")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
 [sub_resource type="Animation" id="Animation_p3n13"]
 resource_name = "draw_arrow"
 length = 2.0
@@ -19,21 +34,6 @@ tracks/0/keys = {
 "transitions": PackedFloat32Array(1.31951, 1),
 "update": 0,
 "values": [0.2, 1.0]
-}
-
-[sub_resource type="Animation" id="Animation_c5y25"]
-length = 0.001
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath(".:animation_progress")
-tracks/0/interp = 1
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
-"update": 0,
-"values": [0.0]
 }
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_jxgu2"]
@@ -56,10 +56,9 @@ autoplay = "draw_arrow"
 position = Vector2(66, 154)
 script = ExtResource("1_gaug5")
 global_end_position = Vector2(259.002, 497.203)
-color = Color(0.469536, 0.716695, 0.887926, 1)
-width = 15.0
+color = Color(0.470588, 0.717647, 0.886275, 0.572549)
 arrowhead_height = 40.0
-outline_color = Color(0.2147, 0.648726, 0, 1)
+outline_color = Color(0.215686, 0.647059, 0, 0.447059)
 outline_thickness = 5
 animation_progress = 0.0
 

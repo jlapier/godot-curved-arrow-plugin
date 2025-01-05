@@ -26,7 +26,7 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
 @export_range(0.0, 1.0) var transparency: float = 0.8:
     set(value):
         transparency = value
-        _update_shader_params()
+        queue_redraw()
 # width of the arrow body, not including the head
 @export var width: float = 30.0:
     set(value):
@@ -47,11 +47,11 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
 @export var outline_color: Color = Color(1.0, 1.0, 1.0, 1.0):
     set(value):
         outline_color = value
-        _update_shader_params()
+        queue_redraw()
 @export_range(0, 10) var outline_thickness: int = 1:
     set(value):
         outline_thickness = value
-        _update_shader_params()
+        queue_redraw()
 
 @export_group("Animation Helper")
 @export_range(0.0, 1.0) var animation_progress: float = 1.0:
@@ -60,7 +60,8 @@ var curved_arrow_scene: PackedScene = load("res://addons/2d_curved_arrow/curved_
             animation_progress = value
             queue_redraw()
 
-var arrow_poly: Polygon2D
+var inner_arrow_poly: Polygon2D
+var outer_arrow_poly: Polygon2D
 var arrow_group: CanvasGroup
 var end_star: Polygon2D
 var reference_rect: ReferenceRect
@@ -79,8 +80,11 @@ func _init():
     end_star       = arrow_scene.get_node("EndStar")
     reference_rect = arrow_scene.get_node("ReferenceRect")
 
-    arrow_poly = Polygon2D.new()
-    arrow_group.add_child(arrow_poly)
+    # XXX: just add these to the scene
+    inner_arrow_poly = Polygon2D.new()
+    outer_arrow_poly = Polygon2D.new()
+    arrow_group.add_child(outer_arrow_poly)
+    arrow_group.add_child(inner_arrow_poly)
 
 func _get_configuration_warnings() -> PackedStringArray:
     var warnings: PackedStringArray = []
@@ -93,14 +97,6 @@ func _notification(what: int) -> void:
         # the position or something changed, so redraw the arrow
         if end_star: end_star.global_position = global_end_position
         queue_redraw()
-
-func _update_shader_params():
-    if not is_node_ready():
-        await ready
-
-    arrow_group.material.set_shader_parameter("line_color", outline_color)
-    arrow_group.material.set_shader_parameter("alpha", transparency)
-    arrow_group.material.set_shader_parameter("line_thickness", outline_thickness)
 
 func _draw():
     if global_end_position == global_position: return
@@ -131,6 +127,7 @@ func _draw():
     var curve: Curve2D = Curve2D.new()
     curve.add_point(start_position, Vector2.ZERO, (control_point - start_position) * start_tangent_factor)
     curve.add_point(end_position, (end_position - control_point) * end_tangent_factor, Vector2.ZERO)
+    curve.bake_interval = 3
 
     var all_points: PackedVector2Array = curve.get_baked_points()
     if all_points.size() < 5:
@@ -148,6 +145,8 @@ func _draw():
     # populate these with either side of the guide arrow
     var top_side_points: Array[Vector2]
     var bottom_side_points: Array[Vector2]
+    var outer_top_side_points: Array[Vector2]
+    var outer_bottom_side_points: Array[Vector2]
 
     # the offset helps us project a few points down the line so we get an accurate direction
     # (and thus perpendicular). But we have to be careful not to go out of bounds of the array.
@@ -157,6 +156,9 @@ func _draw():
     var last_top_tip: Vector2
     var last_bottom_tip: Vector2
     var arrow_tip = guide_points[-1]
+    var outer_last_top_tip: Vector2
+    var outer_last_bottom_tip: Vector2
+    var dir: Vector2
 
     # now go through the guide points and create the sidelines and arrow tips
     for i in guide_points.size():
@@ -166,12 +168,24 @@ func _draw():
         # is to protect us from going out of bounds
         if i + i_offset >= guide_points.size():
             i_offset = max(i_offset - 1, 0)
-        var dir:  Vector2 = (guide_points[i + i_offset] - guide_point).normalized()
+        dir = (guide_points[i + i_offset] - guide_point).normalized()
         var perp: Vector2 = Vector2(-dir.y, dir.x)
-        top_side_points.append(guide_point - perp * width / 2)
-        last_top_tip = guide_point - perp * (arrowhead_width - width) / 2
-        bottom_side_points.append(guide_point + perp * width / 2)
-        last_bottom_tip = guide_point + perp * (arrowhead_width - width) / 2
+        # inner arrow
+        var arrowhead_dist = (arrowhead_width - width) / 2
+        var half_width_dist = width / 2
+        top_side_points.append(guide_point - perp * half_width_dist)
+        last_top_tip = guide_point - perp * arrowhead_dist
+        bottom_side_points.append(guide_point + perp * half_width_dist)
+        last_bottom_tip = guide_point + perp * arrowhead_dist
+        # before doing the outer arrow head, check we aren't up against the height + thickness
+        if guide_point.distance_to(arrow_tip) < arrowhead_height + outline_thickness: continue
+        # outer arrow
+        var outer_arrowhead_dist = arrowhead_dist + outline_thickness * 2
+        var outer_half_width_dist = half_width_dist + outline_thickness
+        outer_top_side_points.append(guide_point - perp * outer_half_width_dist)
+        outer_last_top_tip = guide_point - perp * outer_arrowhead_dist
+        outer_bottom_side_points.append(guide_point + perp * outer_half_width_dist)
+        outer_last_bottom_tip = guide_point + perp * outer_arrowhead_dist
 
     if top_side_points.size() < 1 or bottom_side_points.size() < 1: return
 
@@ -183,8 +197,20 @@ func _draw():
 
     bottom_side_points.reverse() # to order the points, we go up one side, over the head, then down the other side
 
-    arrow_poly.polygon = PackedVector2Array(top_side_points + arrowhead_pts + bottom_side_points)
-    arrow_poly.color = color
+    inner_arrow_poly.polygon = PackedVector2Array(top_side_points + arrowhead_pts + bottom_side_points)
+    inner_arrow_poly.color = color
+
+    var outer_arrow_tip: Vector2 = arrow_tip + dir * outline_thickness * 1.5
+
+    var outer_arrowhead_pts: Array[Vector2] = [
+        outer_last_top_tip,
+        outer_arrow_tip,
+        outer_last_bottom_tip,
+    ]
+
+    outer_bottom_side_points.reverse()
+    outer_arrow_poly.polygon = PackedVector2Array(outer_top_side_points + outer_arrowhead_pts + outer_bottom_side_points)
+    outer_arrow_poly.color = outline_color
 
     if is_selected_in_editor:
         # set up bounding ref - just a visual in the editor
@@ -198,7 +224,7 @@ func _draw():
 
     # set visibility of editor helpers
     reference_rect.visible = is_selected_in_editor
-    end_star.visible       = is_selected_in_editor
+    end_star.visible       =  false #  is_selected_in_editor
 
 ### Public functions
 
