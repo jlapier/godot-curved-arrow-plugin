@@ -103,7 +103,9 @@ func _update_shader_params():
     arrow_group.material.set_shader_parameter("line_thickness", outline_thickness)
 
 func _draw():
-    if global_end_position == global_position: return
+    if global_end_position == global_position:
+        arrow_group.hide()
+        return
 
     # positions will be local to the parent node when the arrow Polygon is added as a child, so convert to local
     var start_position: Vector2 = Vector2.ZERO # start wherever the node's position is
@@ -133,8 +135,6 @@ func _draw():
     curve.add_point(end_position, (end_position - control_point) * end_tangent_factor, Vector2.ZERO)
 
     var all_points: PackedVector2Array = curve.get_baked_points()
-    if all_points.size() < 5:
-        return
 
     # Calculate how many points to use based on animation_progress
     var point_count = int(all_points.size() * animation_progress)
@@ -185,6 +185,7 @@ func _draw():
 
     arrow_poly.polygon = PackedVector2Array(top_side_points + arrowhead_pts + bottom_side_points)
     arrow_poly.color = color
+    arrow_group.show()
 
     if is_selected_in_editor:
         # set up bounding ref - just a visual in the editor

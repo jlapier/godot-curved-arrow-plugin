@@ -13,6 +13,8 @@ func _handles(object) -> bool:
 
 # triggers on select and deselect (with object = null)
 func _edit(object) -> void:
+    if object and object is not Node2D: return
+
     # different arrow selected, deselect the first one
     if _selected_node and _selected_node != object:
         _selected_node.is_selected_in_editor = false
@@ -35,8 +37,8 @@ func _make_visible(visible: bool) -> void:
 # arrow. It works okay, but not great. But it also sets the _end_handle_pos
 # which allows us to know where the handle is so we can detect when it's "grabbed"
 # by the mouse.
-func _forward_canvas_draw_over_viewport(viewport_control: Control) -> void:
-    if !_selected_node or !_selected_node is CurvedArrow2D:
+func _forward_canvas_draw_over_viewport(_viewport_control: Control) -> void:
+    if not (_selected_node and _selected_node is CurvedArrow2D):
         return
 
     _update_transforms()
